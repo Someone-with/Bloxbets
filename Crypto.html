@@ -1,1 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Crypto → Discord Gate (USD Points)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body{font-family:system-ui,sans-serif;background:#111;color:#eee;padding:20px;}
+  h1{color:#0f9;text-align:center;}
+  input,button{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:none;font-size:1rem;}
+  input{background:#222;color:#fff;}
+  button{background:#0f9;color:#000;font-weight:bold;cursor:pointer;}
+  button:disabled{background:#555;cursor:not-allowed;}
+  .box{background:#1a1a2e;padding:15px;border-radius:8px;margin:15px 0;}
+  .addr{font-family:monospace;font-size:1.1rem;word-break:break-all;background:#000;padding:8px;border-radius:4px;}
+  #log{max-height:300px;overflow-y:auto;background:#000;padding:10px;border-radius:6px;font-family:monospace;font-size:0.9rem;}
+  .ok{color:#0f9;}
+  .err{color:#f55;}
+</style>
+</head>
+<body>
 
+<h1>Crypto Payment Gate (USD Points)</h1>
+
+<div class="box">
+  <label><strong>1. Discord Webhook URL</strong></label>
+  <input id="webhook" placeholder="https://discord.com/api/webhooks/...">
+</div>
+
+<div class="box">
+  <label><strong>2. Your Discord User ID</strong></label>
+  <input id="discordId" placeholder="123456789012345678">
+</div>
+
+<button id="saveBtn">Save & Show Receive Addresses</button>
+
+<div id="addresses" style="display:none;">
+  <div class="box"><strong>Bitcoin (BTC)</strong><div class="addr" id="btcAddr"></div></div>
+  <div class="box"><strong>Litecoin (LTC)</strong><div class="addr" id="ltcAddr"></div></div>
+  <div class="box"><strong>Ethereum (ETH)</strong><div class="addr" id="ethAddr"></div></div>
+  <div class="box"><strong>Solana (SOL)</strong><div class="addr" id="solAddr"></div></div>
+</div>
+
+<div id="status" style="margin-top:15px;"></div>
+<div id="log"></div>
+
+<script>
+/* ---------- STORAGE ---------- */
+const STORAGE = {
+  get(k){return localStorage.getItem(k)||'';},
+  set(k,v){localStorage.setItem(k,v);}
+};
+const C = {
+  webhook: STORAGE.get('webhook'),
+  discordId: STORAGE.get('discordId'),
+  btc: STORAGE.get('btc'), ltc: STORAGE.get('ltc'),
+  eth: STORAGE.get('eth'), sol: STORAGE.get('sol'),
+  etherscan: STORAGE.get('etherscan'),
+  last: {
+    btc: STORAGE.get('last_btc'), ltc: STORAGE.get('last_ltc'),
+    eth: STORAGE.get('last_eth'), sol: STORAGE.get('last_sol')
+  },
+  prices: { btc:0, ltc:0, eth:0, sol:0 }
+};
+
+/* ---------- UI ---------- */
+document.getElementById('webhook').value = C.webhook;
+document.getElementById('discordId').value = C.discordId;
+
+document.getElementById('saveBtn').onclick = () => {
+  const wh = document.getElementById('webhook').value.trim();
+  const uid = document.getElementById('discordId').value.trim();
+  if (!wh || !uid) return log('Webhook & ID required', 'err');
+
+  C.webhook = wh; C.discordId = uid;
+  STORAGE.set('webhook',wh); STORAGE.set('discordId',uid);
+
+  // === EDIT YOUR ADDRESSES ===
+  C.btc = '1YOUR_BTC_ADDRESS';
+  C.ltc = 'LYOUR_LTC_ADDRESS';
+  C.eth = '0xYOUR_ETH_ADDRESS';
+  C.sol = 'YOUR_SOL_ADDRESS';
+  C.etherscan = 'YOUR_ETHERSCAN_KEY'; // free
+
+  ['btc','ltc','eth','sol'].forEach(ch=>STORAGE.set(ch,C[ch]));
+  STORAGE.set('etherscan',C.etherscan);
+
+  ['btcAddr','ltcAddr','ethAddr','solAddr'].forEach(id=>document.getElementById(id).textContent=C[id.slice(0,3)]);
+  document.getElementById('addresses').style.display = 'block';
+  document.getElementById('saveBtn').disabled = true;
+  log('Config saved – starting', 'ok');
+
+  // Start price fetch + monitor
+  fetchPrices();
+  setInterval(fetchPrices, 60000); // Update prices every minute
+  checkAll();
+  setInterval(checkAll, 30000);
+};
+
+/* ---------- LOG ---------- */
+function log(msg, cls=''){
+  const d = document.createElement('div');
+  d.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  if(cls) d.className = cls;
+  document.getElementById('log').prepend(d);
+  document.getElementById('status').textContent = `Last check: ${new Date().toLocaleString()}`;
+}
+
+/* ---------- FETCH LIVE PRICES (CoinGecko) ---------- */
+async function fetchPrices() {
+  try {
+    const ids = 'bitcoin,litecoin,ethereum,solana';
+    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+    const data = await res.json();
+    C.prices.btc = data.bitcoin.usd;
+    C.prices.ltc = data.litecoin.usd;
+    C.prices.eth = data.ethereum.usd;
+    C.prices.sol = data.solana.usd;
+    log(`Prices: BTC$${C.prices.btc} LTC$${C.prices.ltc} ETH$${C.prices.eth} SOL$${C.prices.sol}`);
+  } catch (e) { log(`Price fetch error: ${e.message}`, 'err'); }
+}
+
+/* ---------- DISCORD POST (USD-BASED POINTS) ---------- */
+async function post(chain, amountCrypto, usdValue, txHash, explorerUrl) {
+  if (!C.webhook || !C.discordId) return;
+
+  const usdNum = parseFloat(usdValue);
+  let pointsMsg = '';
+
+  if (usdNum < 0.01) {
+    pointsMsg = `low (${usdValue})`;
+  } else {
+    const points = Math.floor(usdNum / 0.01);
+    pointsMsg = `${points}`;
+  }
+
+  const embed = {
+    title: 'Game deposit!',
+    color: chain === 'BTC' ? 16744448 :
+           chain === 'LTC' ? 3447003 :
+           chain === 'ETH' ? 15158332 : 6032829,
+    description: `User <@${C.discordId}>\nPayment Crypto\nPoints (${pointsMsg})`,
+    fields: [
+      { name: 'Crypto', value: `${amountCrypto} ${chain}`, inline: true },
+      { name: 'USD', value: `$${usdValue}`, inline: true },
+      { name: 'TX', value: `[View](${explorerUrl})` }
+    ],
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    await fetch(C.webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ embeds: [embed] })
+    });
+    log(`Sent: ${amountCrypto} ${chain} = $${usdValue} → ${pointsMsg} points`);
+  } catch (e) {
+    log(`Discord error: ${e.message}`, 'err');
+  }
+}
+
+/* ---------- CHAIN CHECKERS (with USD conversion) ---------- */
+async function checkBTC(){
+  if(!C.btc || !C.prices.btc) return;
+  try{
+    const url = `https://api.blockcypher.com/v1/btc/main/addrs/${C.btc}/full`;
+    const d = await (await fetch(url)).json();
+    const tx = d.txrefs?.[0];
+    if(!tx || tx.tx_hash===C.last.btc) return;
+    if(tx.tx_output_n>=0){
+      C.last.btc = tx.tx_hash; STORAGE.set('last_btc',tx.tx_hash);
+      const amountCrypto = (tx.value/1e8).toFixed(8);
+      const usdValue = (amountCrypto * C.prices.btc).toFixed(4);
+      post('BTC', amountCrypto, usdValue, tx.tx_hash, `https://live.blockcypher.com/btc/tx/${tx.tx_hash}/`);
+    }
+  }catch(e){log(`BTC error: ${e.message}`,'err');}
+}
+
+async function checkLTC(){
+  if(!C.ltc || !C.prices.ltc) return;
+  try{
+    const url = `https://api.blockcypher.com/v1/ltc/main/addrs/${C.ltc}/full`;
+    const d = await (await fetch(url)).json();
+    const tx = d.txrefs?.[0];
+    if(!tx || tx.tx_hash===C.last.ltc) return;
+    if(tx.tx_output_n>=0){
+      C.last.ltc = tx.tx_hash; STORAGE.set('last_ltc',tx.tx_hash);
+      const amountCrypto = (tx.value/1e8).toFixed(8);
+      const usdValue = (amountCrypto * C.prices.ltc).toFixed(4);
+      post('LTC', amountCrypto, usdValue, tx.tx_hash, `https://live.blockcypher.com/ltc/tx/${tx.tx_hash}/`);
+    }
+  }catch(e){log(`LTC error: ${e.message}`,'err');}
+}
+
+async function checkETH(){
+  if(!C.eth || !C.prices.eth) return;
+  try{
+    const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${C.eth}&sort=desc&apikey=${C.etherscan}`;
+    const d = await (await fetch(url)).json();
+    const tx = d.result?.[0];
+    if(!tx || tx.hash===C.last.eth) return;
+    if(tx.to.toLowerCase()===C.eth.toLowerCase()){
+      C.last.eth = tx.hash; STORAGE.set('last_eth',tx.hash);
+      const amountCrypto = (parseInt(tx.value)/1e18).toFixed(6);
+      const usdValue = (amountCrypto * C.prices.eth).toFixed(4);
+      post('ETH', amountCrypto, usdValue, tx.hash, `https://etherscan.io/tx/${tx.hash}`);
+    }
+  }catch(e){log(`ETH error: ${e.message}`,'err');}
+}
+
+async function checkSOL(){
+  if(!C.sol || !C.prices.sol) return;
+  try{
+    const sigRes = await fetch('https://api.mainnet-beta.solana.com',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getSignaturesForAddress',params:[C.sol,{limit:1}]})
+    });
+    const sigData = await sigRes.json();
+    const sig = sigData.result?.[0]?.signature;
+    if(!sig || sig===C.last.sol) return;
+
+    const txRes = await fetch('https://api.mainnet-beta.solana.com',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTransaction',params:[sig,{encoding:'json',maxSupportedTransactionVersion:0}]})
+    });
+    const tx = await txRes.json();
+    const pre = tx.result?.meta?.preBalances?.[0]||0;
+    const post = tx.result?.meta?.postBalances?.[0]||0;
+    const diff = post-pre;
+    if(diff>0){
+      C.last.sol = sig; STORAGE.set('last_sol',sig);
+      const amountCrypto = (diff/1e9).toFixed(9);
+      const usdValue = (amountCrypto * C.prices.sol).toFixed(4);
+      post('SOL', amountCrypto, usdValue, sig, `https://solscan.io/tx/${sig}`);
+    }
+  }catch(e){log(`SOL error: ${e.message}`,'err');}
+}
+
+async function checkAll(){
+  await Promise.allSettled([checkBTC(),checkLTC(),checkETH(),checkSOL()]);
+}
+
+/* ---------- AUTO-START ---------- */
+if(C.webhook && C.discordId && C.btc && C.ltc && C.eth && C.sol){
+  ['btcAddr','ltcAddr','ethAddr','solAddr'].forEach(id=>document.getElementById(id).textContent=C[id.slice(0,3)]);
+  document.getElementById('addresses').style.display = 'block';
+  document.getElementById('saveBtn').disabled = true;
+  log('Loaded config – monitoring', 'ok');
+  fetchPrices();
+  setInterval(fetchPrices, 60000);
+  checkAll();
+  setInterval(checkAll,30000);
+}
+</script>
+</body>
+</html>
