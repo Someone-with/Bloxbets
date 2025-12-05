@@ -1,116 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Donate → Get Points</title>
-  <style>
-    body{
-      font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
-      max-width:560px;
-      margin:2rem auto;
-      padding:1rem;
-      background:#f8f9fc;
-      color:#1a1a1a;
-    }
-    h1{color:#5865F2;margin-bottom:.5rem;}
-    p{margin:.5rem 0 1.5rem;}
-    label{display:block;margin:1rem 0 .4rem;font-weight:600;}
-    input{
-      padding:.8rem;
-      font-size:1rem;
-      width:100%;
-      border:1px solid #ccc;
-      border-radius:6px;
-      box-sizing:border-box;
-    }
-    #paypal-button-container{margin-top:1.5rem;}
-    .success{
-      background:#d4edda;
-      color:#155724;
-      padding:1rem;
-      border-radius:6px;
-      margin-top:1.5rem;
-      display:none;
-      font-weight:500;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GemHaven Points Guide</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        a {
+            color: #00ff99;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Header/Hero Section */
+        header {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: url('https://via.placeholder.com/1920x1080?text=GemHaven+Background') no-repeat center/cover;
+            position: relative;
+            overflow: hidden;
+        }
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+        header > * {
+            position: relative;
+            z-index: 2;
+        }
+        header h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: fadeInDown 1s ease-out;
+        }
+        header p {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease-out 0.5s;
+            animation-fill-mode: both;
+        }
+        .btn {
+            background: #00ff99;
+            color: #000;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 153, 0.5);
+            text-decoration: none;
+        }
+
+        /* Sections */
+        section {
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        #how-to-earn {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            margin: 2rem auto;
+            padding: 3rem;
+            box-shadow: 0 0 30px rgba(0, 255, 153, 0.2);
+        }
+        h2 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #00ff99;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 153, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            animation: fadeIn 1s ease-out;
+        }
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 20px rgba(0, 255, 153, 0.5);
+        }
+        .card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: #00ff99;
+        }
+        .card p {
+            font-size: 1.2rem;
+        }
+
+        /* Withdrawal Section */
+        #withdrawal {
+            text-align: center;
+        }
+        #withdrawal .steps {
+            list-style: none;
+            margin-top: 2rem;
+        }
+        #withdrawal .steps li {
+            font-size: 1.2rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(0, 255, 153, 0.1);
+            border-radius: 10px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.8);
+            font-size: 0.9rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
 </head>
 <body>
+    <header>
+        <h1>Welcome to GemHaven Points Guide</h1>
+        <p>Learn how to earn and deposit points through gems in our exciting Roblox game!</p>
+        <a href="https://www.roblox.com/games/132046608524992/GemHaven" class="btn" target="_blank">Play GemHaven Now</a>
+    </header>
 
-  <h1>Bloxbets paypal/card deposit</h1>
-  <p>Every $1 = 1.00 point in-game. Your Discord ID will be used for talking to discord.</p>
+    <section id="how-to-earn">
+        <h2>How to Earn Gems and Convert to Points</h2>
+        <p>In GemHaven, you can earn gems in two main ways, which can then be converted to points (100 gems = 1 point). These points can be deposited or donated via our system.</p>
+        <div class="cards">
+            <div class="card">
+                <h3>Buy Gems in the In-Game Store</h3>
+                <p>Purchase gems directly from the in-game store using Robux. These gems can immediately be used for deposits. Support the game and get gems fast!</p>
+            </div>
+            <div class="card">
+                <h3>AFK for Passive Earnings</h3>
+                <p>Stay in the game and AFK (Away From Keyboard) to earn 1 gem every minute. It's a simple way to accumulate gems over time without active play.</p>
+            </div>
+        </div>
+    </section>
 
-  <label>Discord User ID (needed):</label>
-  <input id="discordId" type="text" placeholder="123456789012345678">
+    <section id="withdrawal">
+        <h2>How to Withdraw and Deposit Points</h2>
+        <p>Once you've collected enough gems, follow these steps to withdraw them to points via our bot:</p>
+        <ul class="steps">
+            <li>Gather at least 100 gems (since 100 gems = 1 point).</li>
+            <li>In the game, hit the "Withdraw to Bot" button.</li>
+            <li>Enter the amount of gems you want to withdraw.</li>
+            <li>Provide your Discord User ID (UID) for verification and deposit.</li>
+            <li>Confirm, and your points will be deposited/donated accordingly!</li>
+        </ul>
+        <p>Note: Ensure your Discord UID is correct to avoid any issues.</p>
+    </section>
 
-  <label>Donation Amount (USD):</label>
-  <input id="amount" type="number" min="1" step="0.01" placeholder="5.00" value="5.00">
-
-  <div id="paypal-button-container"></div>
-
-  <div id="success" class="success">
-    Donation successful! Points added in Discord.
-  </div>
-
-  <!-- PayPal SDK -->
-  <script src="https://www.paypal.com/sdk/js?client-id=AUp0UM3hJPic-OtC2uaIKjs0EJLxxn0zVNZVrHs1C-GVK-5BaI0gHj10iNbgpS4fnwPuGUcqGUCGcrPy&currency=USD"></script>
-
-  <script>
-    // === YOUR DISCORD WEBHOOK (HARD-CODED) ===
-    const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1434584171207987351/LwPIu4d10o0rwE8DUfGps4XsVXRdyMHDOf8hi-lGWt9LgjgX1t9YblPnmAjCEOiCLVz5";
-
-    const discordIdInput = document.getElementById('discordId');
-    const amountInput    = document.getElementById('amount');
-    const successDiv     = document.getElementById('success');
-
-    paypal.Buttons({
-      createOrder: function(data, actions) {
-        let raw = amountInput.value.trim();
-        if (!raw || isNaN(raw) || parseFloat(raw) < 1) {
-          alert('Please enter an amount of $1.00 or more.');
-          return;
-        }
-        const value = parseFloat(raw).toFixed(2);
-        return actions.order.create({
-          purchase_units: [{ amount: { value } }]
-        });
-      },
-
-      onApprove: function(data, actions) {
-        return actions.order.capture().then(async function(details) {
-          const amount = details.purchase_units[0].amount.value;
-          const discordId = discordIdInput.value.trim();
-          const mention = discordId ? `<@${discordId}>` : 'Anonymous';
-
-          const message = {
-            content: `Game deposit!\nUser ${mention}\nPoints (${amount})`
-          };
-
-          try {
-            const resp = await fetch(DISCORD_WEBHOOK, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(message)
-            });
-            if (resp.ok) {
-              successDiv.style.display = 'block';
-            } else {
-              throw new Error('Status: ' + resp.status);
-            }
-          } catch (err) {
-            console.error('Discord error:', err);
-            alert('Payment succeeded, but Discord alert failed. Contact admin.');
-          }
-        });
-      },
-
-      onError: function(err) {
-        console.error('PayPal error:', err);
-        alert('Payment failed – please try again.');
-      }
-    }).render('#paypal-button-container');
-  </script>
-
+    <footer>
+        <p>&copy; 2025 GemHaven Guide. All rights reserved. <a href="https://www.roblox.com/games/132046608524992/GemHaven" target="_blank">Visit the Game</a></p>
+    </footer>
 </body>
 </html>
