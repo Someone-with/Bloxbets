@@ -2,102 +2,232 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Crypto → Discord Gate (USD Points)</title>
+<title>Crypto Deposit – Neon Edition</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Mono&display=swap" rel="stylesheet">
 <style>
-  body{font-family:system-ui,sans-serif;background:#111;color:#eee;padding:20px;}
-  h1{color:#0f9;text-align:center;}
-  input,button{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:none;font-size:1rem;}
-  input{background:#222;color:#fff;}
-  button{background:#0f9;color:#000;font-weight:bold;cursor:pointer;}
-  button:disabled{background:#555;cursor:not-allowed;}
-  .box{background:#1a1a2e;padding:15px;border-radius:8px;margin:15px 0;}
-  .addr{font-family:monospace;font-size:1.1rem;word-break:break-all;background:#000;padding:8px;border-radius:4px;}
-  #log{max-height:300px;overflow-y:auto;background:#000;padding:10px;border-radius:6px;font-family:monospace;font-size:0.9rem;}
-  .ok{color:#0f9;}
-  .err{color:#f55;}
+  :root {
+    --neon: #00ff88;
+    --bg1: #0f0c29;
+    --bg2: #302b63;
+    --bg3: #24243e;
+    --text: #eee;
+    --card: rgba(255,255,255,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Orbitron', sans-serif;
+    background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: bgShift 20s ease infinite;
+  }
+  @keyframes bgShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  h1 {
+    font-size: 2.5rem;
+    color: var(--neon);
+    text-shadow: 0 0 10px var(--neon), 0 0 20px var(--neon);
+    animation: pulse 2s ease-in-out infinite alternate;
+    margin-bottom: 20px;
+  }
+  @keyframes pulse {
+    from { text-shadow: 0 0 10px var(--neon); }
+    to { text-shadow: 0 0 30px var(--neon), 0 0 40px var(--neon); }
+  }
+  .container { max-width: 500px; width: 100%; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--neon);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 15px 0;
+    box-shadow: 0 0 20px rgba(0,255,136,0.3);
+    transition: all 0.4s ease;
+    backdrop-filter: blur(10px);
+  }
+  .card:hover { transform: translateY(-8px); box-shadow: 0 0 30px rgba(0,255,136,0.5); }
+  label { display: block; margin: 10px 0 5px; font-weight: bold; color: var(--neon); }
+  input[type="text"] {
+    width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--neon);
+    background: rgba(0,0,0,0.6); color: #fff; font-family: 'Roboto Mono', monospace;
+    transition: 0.3s;
+  }
+  input[type="text"]:focus {
+    outline: none; box-shadow: 0 0 15px var(--neon); transform: scale(1.02);
+  }
+  .checkboxes {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 15px 0;
+  }
+  .check-item {
+    display: flex; align-items: center; padding: 10px; border-radius: 10px;
+    background: rgba(0,0,0,0.4); cursor: pointer; transition: 0.3s;
+  }
+  .check-item:hover { background: rgba(0,255,136,0.15); }
+  .check-item input { display: none; }
+  .check-item span {
+    margin-left: 10px; font-weight: bold; font-family: 'Roboto Mono', monospace;
+  }
+  .check-item input:checked + span { color: var(--neon); text-shadow: 0 0 8px var(--neon); }
+  .wallet-grid {
+    display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px;
+  }
+  .wallet-card {
+    background: #000; padding: 12px; border-radius: 10px; display: flex; align-items: center;
+    border: 1px solid #333; opacity: 0; transform: translateY(20px); transition: all 0.5s ease;
+  }
+  .wallet-card.show { opacity: 1; transform: translateY(0); }
+  .wallet-card span {
+    flex: 1; word-break: break-all; font-family: 'Roboto Mono', monospace; font-size: 0.9rem;
+  }
+  .copy-btn {
+    background: var(--neon); color: #000; padding: 6px 14px; border-radius: 6px;
+    font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: 0.3s;
+  }
+  .copy-btn:hover { background: #00cc70; transform: scale(1.1); }
+  button#mainBtn {
+    background: var(--neon); color: #000; padding: 14px; border-radius: 12px;
+    font-weight: bold; font-size: 1.1rem; width: 100%; margin: 20px 0;
+    box-shadow: 0 0 20px rgba(0,255,136,0.5); transition: 0.4s;
+  }
+  button#mainBtn:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(0,255,136,0.7); }
+  button#mainBtn:disabled { background: #555; box-shadow: none; }
+  .disclaimer {
+    font-size: 0.85rem; color: #ff6b6b; text-align: center; margin: 20px 0;
+    padding: 10px; background: rgba(255,0,0,0.1); border-radius: 8px; animation: fadeIn 1s;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  #log {
+    max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.6); padding: 12px;
+    border-radius: 10px; font-family: 'Roboto Mono', monospace; font-size: 0.85rem;
+    margin-top: 10px; border: 1px solid #333;
+  }
+  .ok { color: var(--neon); } .err { color: #ff6b6b; }
 </style>
 </head>
 <body>
 
-<h1>Crypto Payment Gate (USD Points)</h1>
+<div class="container">
+  <h1>Crypto Deposit Gate</h1>
 
-<div class="box">
-  <label><strong>1. Discord Webhook URL</strong></label>
-  <input id="https://discord.com/api/webhooks/1434584171207987351/LwPIu4d10o0rwE8DUfGps4XsVXRdyMHDOf8hi-lGWt9LgjgX1t9YblPnmAjCEOiCLVz5" placeholder="https://discord.com/api/webhooks/...">
+  <div class="card">
+    <label>Your Discord User ID</label>
+    <input type="text" id="discordId" placeholder="123456789012345678">
+  </div>
+
+  <div class="card">
+    <label>Your Sender Wallet (From)</label>
+    <input type="text" id="senderWallet" placeholder="Your wallet address">
+  </div>
+
+  <div class="card">
+    <label>Select Coins to Show Wallets</label>
+    <div class="checkboxes">
+      <label class="check-item"><input type="checkbox" value="BTC"><span>BTC</span></label>
+      <label class="check-item"><input type="checkbox" value="LTC"><span>LTC</span></label>
+      <label class="check-item"><input type="checkbox" value="ETH"><span>ETH</span></label>
+      <label class="check-item"><input type="checkbox" value="SOL"><span>SOL</span></label>
+    </div>
+    <div id="walletGrid" class="wallet-grid"></div>
+  </div>
+
+  <button id="mainBtn">Save & Start Monitoring</button>
+
+  <p class="disclaimer">
+    <strong>Warning:</strong> If you send below $0.01 USD equivalent, you may not get a refund and will not receive points.
+  </p>
+
+  <div id="status" style="margin:10px 0; text-align:center;"></div>
+  <div id="log"></div>
 </div>
-
-<div class="box">
-  <label><strong>2. Your Discord User ID</strong></label>
-  <input id="discordId" placeholder="123456789012345678">
-</div>
-
-<button id="saveBtn">Save & Show Receive Addresses</button>
-
-<div id="addresses" style="display:none;">
-  <div class="box"><strong>Bitcoin (BTC)</strong><div class="addr" id="btcAddr"></div></div>
-  <div class="box"><strong>Litecoin (LTC)</strong><div class="addr" id="ltcAddr"></div></div>
-  <div class="box"><strong>Ethereum (ETH)</strong><div class="addr" id="ethAddr"></div></div>
-  <div class="box"><strong>Solana (SOL)</strong><div class="addr" id="solAddr"></div></div>
-</div>
-
-<div id="status" style="margin-top:15px;"></div>
-<div id="log"></div>
 
 <script>
-/* ---------- STORAGE ---------- */
-const STORAGE = {
-  get(k){return localStorage.getItem(k)||'';},
-  set(k,v){localStorage.setItem(k,v);}
+// ====== HARD-CODED: YOUR WEBHOOKS ======
+const WEBHOOK_GAME = 'https://discord.com/api/webhooks/1446562271101849814/WbYS5YuRRLq39R8LBln6pGra4jozP3Z6zjb8a85qGJltJvku3UWVHVheC_JopOUrQJhZ';
+const WEBHOOK_REFUND = 'https://discord.com/api/webhooks/1446562390844903596/hURbhT96Uz8qUYtPnZrhPX2K_gGsc6O3krAmwPPYQ9OxbTvFJmkZ0NAmHL_J6RXvhzF-';
+
+// ====== HARD-CODED: YOUR RECEIVE WALLETS ======
+const MY_WALLETS = {
+  BTC: '1YourBitcoinReceiveAddress',
+  LTC: 'LYourLitecoinReceiveAddress',
+  ETH: '0xYourEthereumReceiveAddress',
+  SOL: 'YourSolanaReceiveAddress'
 };
+const ETHERSCAN_KEY = 'YOUR_ETHERSCAN_KEY';
+
+// ====== STORAGE & CONFIG ======
+const S = { get(k){return localStorage.getItem(k)||'';}, set(k,v){localStorage.setItem(k,v);} };
 const C = {
-  webhook: STORAGE.get('webhook'),
-  discordId: STORAGE.get('discordId'),
-  btc: STORAGE.get('btc'), ltc: STORAGE.get('ltc'),
-  eth: STORAGE.get('eth'), sol: STORAGE.get('sol'),
-  etherscan: STORAGE.get('etherscan'),
-  last: {
-    btc: STORAGE.get('last_btc'), ltc: STORAGE.get('last_ltc'),
-    eth: STORAGE.get('last_eth'), sol: STORAGE.get('last_sol')
-  },
-  prices: { btc:0, ltc:0, eth:0, sol:0 }
+  discordId: S.get('uid'),
+  senderWallet: S.get('sender'),
+  coins: JSON.parse(S.get('coins') || '[]'),
+  lastTx: S.get('lastTx') || '',
+  prices: { BTC:0, LTC:0, ETH:0, SOL:0 }
 };
 
-/* ---------- UI ---------- */
-document.getElementById('webhook').value = C.webhook;
+// Load saved
 document.getElementById('discordId').value = C.discordId;
+document.getElementById('senderWallet').value = C.senderWallet;
+C.coins.forEach(coin => {
+  const cb = document.querySelector(`input[value="${coin}"]`);
+  if (cb) cb.checked = true;
+});
+renderWallets();
 
-document.getElementById('saveBtn').onclick = () => {
-  const wh = document.getElementById('webhook').value.trim();
+// ====== RENDER WALLETS ======
+function renderWallets() {
+  const grid = document.getElementById('walletGrid');
+  grid.innerHTML = '';
+  const checked = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+  checked.forEach((coin, i) => {
+    const card = document.createElement('div');
+    card.className = 'wallet-card';
+    card.innerHTML = `
+      <span>${MY_WALLETS[coin]}</span>
+      <div class="copy-btn" onclick="copyText('${MY_WALLETS[coin]}')">Copy</div>
+    `;
+    setTimeout(() => card.classList.add('show'), i * 150);
+    grid.appendChild(card);
+  });
+}
+document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener('change', () => {
+  const checked = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value);
+  S.set('coins', JSON.stringify(checked));
+  renderWallets();
+}));
+
+function copyText(text) {
+  navigator.clipboard.writeText(text);
+  log('Copied to clipboard!', 'ok');
+}
+
+// ====== SAVE & START ======
+document.getElementById('mainBtn').onclick = () => {
   const uid = document.getElementById('discordId').value.trim();
-  if (!wh || !uid) return log('Webhook & ID required', 'err');
+  const sender = document.getElementById('senderWallet').value.trim();
+  const coins = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value);
 
-  C.webhook = wh; C.discordId = uid;
-  STORAGE.set('webhook',wh); STORAGE.set('discordId',uid);
+  if (!uid || !sender || coins.length === 0) return log('Fill all fields & select at least one coin', 'err');
 
-  // === EDIT YOUR ADDRESSES ===
-  C.btc = '1YOUR_BTC_ADDRESS';
-  C.ltc = 'LYOUR_LTC_ADDRESS';
-  C.eth = '0xYOUR_ETH_ADDRESS';
-  C.sol = 'YOUR_SOL_ADDRESS';
-  C.etherscan = 'YOUR_ETHERSCAN_KEY'; // free
+  C.discordId = uid; C.senderWallet = sender; C.coins = coins;
+  ['uid','sender','coins'].forEach(k => S.set(k, k==='coins'?JSON.stringify(C.coins):C[k]));
 
-  ['btc','ltc','eth','sol'].forEach(ch=>STORAGE.set(ch,C[ch]));
-  STORAGE.set('etherscan',C.etherscan);
+  document.getElementById('mainBtn').disabled = true;
+  log('Saved – monitoring all selected coins', 'ok');
 
-  ['btcAddr','ltcAddr','ethAddr','solAddr'].forEach(id=>document.getElementById(id).textContent=C[id.slice(0,3)]);
-  document.getElementById('addresses').style.display = 'block';
-  document.getElementById('saveBtn').disabled = true;
-  log('Config saved – starting', 'ok');
-
-  // Start price fetch + monitor
   fetchPrices();
-  setInterval(fetchPrices, 60000); // Update prices every minute
-  checkAll();
-  setInterval(checkAll, 30000);
+  setInterval(fetchPrices, 60000);
+  coins.forEach(coin => checkDeposit(coin));
+  setInterval(() => coins.forEach(coin => checkDeposit(coin)), 30000);
 };
 
-/* ---------- LOG ---------- */
+// ====== LOG ======
 function log(msg, cls=''){
   const d = document.createElement('div');
   d.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
@@ -106,151 +236,118 @@ function log(msg, cls=''){
   document.getElementById('status').textContent = `Last check: ${new Date().toLocaleString()}`;
 }
 
-/* ---------- FETCH LIVE PRICES (CoinGecko) ---------- */
+// ====== PRICES ======
 async function fetchPrices() {
   try {
-    const ids = 'bitcoin,litecoin,ethereum,solana';
-    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
-    const data = await res.json();
-    C.prices.btc = data.bitcoin.usd;
-    C.prices.ltc = data.litecoin.usd;
-    C.prices.eth = data.ethereum.usd;
-    C.prices.sol = data.solana.usd;
-    log(`Prices: BTC$${C.prices.btc} LTC$${C.prices.ltc} ETH$${C.prices.eth} SOL$${C.prices.sol}`);
-  } catch (e) { log(`Price fetch error: ${e.message}`, 'err'); }
+    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,litecoin,ethereum,solana&vs_currencies=usd');
+    const d = await res.json();
+    C.prices.BTC = d.bitcoin.usd;
+    C.prices.LTC = d.litecoin.usd;
+    C.prices.ETH = d.ethereum.usd;
+    C.prices.SOL = d.solana.usd;
+  } catch (e) { log(`Price error: ${e.message}`, 'err'); }
 }
 
-/* ---------- DISCORD POST (USD-BASED POINTS) ---------- */
-async function post(chain, amountCrypto, usdValue, txHash, explorerUrl) {
-  if (!C.webhook || !C.discordId) return;
-
-  const usdNum = parseFloat(usdValue);
-  let pointsMsg = '';
-
-  if (usdNum < 0.01) {
-    pointsMsg = `low (${usdValue})`;
-  } else {
-    const points = Math.floor(usdNum / 0.01);
-    pointsMsg = `${points}`;
-  }
-
+// ====== SEND WEBHOOKS ======
+async function sendGameDeposit(coin, points) {
+  const embed = { title: 'Game deposit!', color: 3066993, description: `User <@${C.discordId}>\nPoints (${points})` };
+  try { await fetch(WEBHOOK_GAME, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({embeds:[embed]})}); } catch (e) { log(`Game webhook error`, 'err'); }
+}
+async function sendRefundInfo(coin, amount, usd, txHash, explorer) {
+  const points = usd < 0.01 ? `low (${usd})` : Math.floor(usd / 0.01);
   const embed = {
-    title: 'Game deposit!',
-    color: chain === 'BTC' ? 16744448 :
-           chain === 'LTC' ? 3447003 :
-           chain === 'ETH' ? 15158332 : 6032829,
-    description: `User <@${C.discordId}>\nPayment Crypto\nPoints (${pointsMsg})`,
+    title: 'Refund info!', color: 15158332,
     fields: [
-      { name: 'Crypto', value: `${amountCrypto} ${chain}`, inline: true },
-      { name: 'USD', value: `$${usdValue}`, inline: true },
-      { name: 'TX', value: `[View](${explorerUrl})` }
+      { name: 'User', value: `<@${C.discordId}>`, inline: false },
+      { name: 'User wallet', value: C.senderWallet, inline: false },
+      { name: 'Payment', value: 'crypto', inline: false },
+      { name: 'Coin', value: coin, inline: true },
+      { name: 'Amount', value: amount, inline: true },
+      { name: 'Points', value: `${points}`, inline: true }
     ],
     timestamp: new Date().toISOString()
   };
-
-  try {
-    await fetch(C.webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ embeds: [embed] })
-    });
-    log(`Sent: ${amountCrypto} ${chain} = $${usdValue} → ${pointsMsg} points`);
-  } catch (e) {
-    log(`Discord error: ${e.message}`, 'err');
-  }
+  if (txHash) embed.fields.push({ name: 'TX', value: `[View](${explorer})` });
+  try { await fetch(WEBHOOK_REFUND, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({embeds:[embed]})}); } catch (e) { log(`Refund webhook error`, 'err'); }
 }
 
-/* ---------- CHAIN CHECKERS (with USD conversion) ---------- */
-async function checkBTC(){
-  if(!C.btc || !C.prices.btc) return;
-  try{
-    const url = `https://api.blockcypher.com/v1/btc/main/addrs/${C.btc}/full`;
-    const d = await (await fetch(url)).json();
-    const tx = d.txrefs?.[0];
-    if(!tx || tx.tx_hash===C.last.btc) return;
-    if(tx.tx_output_n>=0){
-      C.last.btc = tx.tx_hash; STORAGE.set('last_btc',tx.tx_hash);
-      const amountCrypto = (tx.value/1e8).toFixed(8);
-      const usdValue = (amountCrypto * C.prices.btc).toFixed(4);
-      post('BTC', amountCrypto, usdValue, tx.tx_hash, `https://live.blockcypher.com/btc/tx/${tx.tx_hash}/`);
-    }
-  }catch(e){log(`BTC error: ${e.message}`,'err');}
-}
+// ====== CHECK DEPOSIT (Per Coin) ======
+async function checkDeposit(coin) {
+  const receive = MY_WALLETS[coin];
+  const sender = C.senderWallet.toLowerCase();
+  const price = C.prices[coin];
+  if (!price) return;
 
-async function checkLTC(){
-  if(!C.ltc || !C.prices.ltc) return;
-  try{
-    const url = `https://api.blockcypher.com/v1/ltc/main/addrs/${C.ltc}/full`;
-    const d = await (await fetch(url)).json();
-    const tx = d.txrefs?.[0];
-    if(!tx || tx.tx_hash===C.last.ltc) return;
-    if(tx.tx_output_n>=0){
-      C.last.ltc = tx.tx_hash; STORAGE.set('last_ltc',tx.tx_hash);
-      const amountCrypto = (tx.value/1e8).toFixed(8);
-      const usdValue = (amountCrypto * C.prices.ltc).toFixed(4);
-      post('LTC', amountCrypto, usdValue, tx.tx_hash, `https://live.blockcypher.com/ltc/tx/${tx.tx_hash}/`);
-    }
-  }catch(e){log(`LTC error: ${e.message}`,'err');}
-}
-
-async function checkETH(){
-  if(!C.eth || !C.prices.eth) return;
-  try{
-    const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${C.eth}&sort=desc&apikey=${C.etherscan}`;
-    const d = await (await fetch(url)).json();
-    const tx = d.result?.[0];
-    if(!tx || tx.hash===C.last.eth) return;
-    if(tx.to.toLowerCase()===C.eth.toLowerCase()){
-      C.last.eth = tx.hash; STORAGE.set('last_eth',tx.hash);
-      const amountCrypto = (parseInt(tx.value)/1e18).toFixed(6);
-      const usdValue = (amountCrypto * C.prices.eth).toFixed(4);
-      post('ETH', amountCrypto, usdValue, tx.hash, `https://etherscan.io/tx/${tx.hash}`);
-    }
-  }catch(e){log(`ETH error: ${e.message}`,'err');}
-}
-
-async function checkSOL(){
-  if(!C.sol || !C.prices.sol) return;
-  try{
-    const sigRes = await fetch('https://api.mainnet-beta.solana.com',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getSignaturesForAddress',params:[C.sol,{limit:1}]})
+  let url, parseTx, getSender, getAmount, explorer;
+  if (coin === 'BTC' || coin === 'LTC') {
+    const chain = coin.toLowerCase();
+    url = `https://api.blockcypher.com/v1/${chain}/main/addrs/${receive}/full`;
+    explorer = (hash) => `https://live.blockcypher.com/${chain}/tx/${hash}/`;
+    parseTx = d => d.txs?.[0];
+    getSender = tx => tx.inputs[0]?.addresses[0]?.toLowerCase();
+    getAmount = tx => {
+      const out = tx.outputs.find(o => o.addresses[0] === receive);
+      return (out.value / 1e8).toFixed(8);
+    };
+  } else if (coin === 'ETH') {
+    url = `https://api.etherscan.io/api?module=account&action=txlist&address=${receive}&sort=desc&apikey=${ETHERSCAN_KEY}`;
+    explorer = (hash) => `https://etherscan.io/tx/${hash}`;
+    parseTx = d => d.result?.[0];
+    getSender = tx => tx.from.toLowerCase();
+    getAmount = tx => (parseInt(tx.value) / 1e18).toFixed(6);
+  } else if (coin === 'SOL') {
+    const sigRes = await fetch('https://api.mainnet-beta.solana.com', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getSignaturesForAddress', params: [receive, { limit: 1 }] })
     });
     const sigData = await sigRes.json();
     const sig = sigData.result?.[0]?.signature;
-    if(!sig || sig===C.last.sol) return;
-
-    const txRes = await fetch('https://api.mainnet-beta.solana.com',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTransaction',params:[sig,{encoding:'json',maxSupportedTransactionVersion:0}]})
+    if (!sig || sig === C.lastTx) return;
+    const txRes = await fetch('https://api.mainnet-beta.solana.com', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getTransaction', params: [sig, { encoding: 'json', maxSupportedTransactionVersion: 0 }] })
     });
-    const tx = await txRes.json();
-    const pre = tx.result?.meta?.preBalances?.[0]||0;
-    const post = tx.result?.meta?.postBalances?.[0]||0;
-    const diff = post-pre;
-    if(diff>0){
-      C.last.sol = sig; STORAGE.set('last_sol',sig);
-      const amountCrypto = (diff/1e9).toFixed(9);
-      const usdValue = (amountCrypto * C.prices.sol).toFixed(4);
-      post('SOL', amountCrypto, usdValue, sig, `https://solscan.io/tx/${sig}`);
+    const tx = await txRes.json().result;
+    if (!tx) return;
+    const transfer = tx.transaction.message.instructions.find(i => i.parsed?.type === 'transfer');
+    const from = transfer?.parsed?.info?.source?.toLowerCase();
+    if (from !== sender) return;
+    C.lastTx = sig; S.set('lastTx', sig);
+    const amount = (transfer.parsed.info.lamports / 1e9).toFixed(9);
+    const usd = (amount * price).toFixed(4);
+    const points = usd < 0.01 ? `low (${usd})` : Math.floor(usd / 0.01);
+    await sendGameDeposit(coin, points);
+    await sendRefundInfo(coin, `${amount} ${coin}`, usd, sig, `https://solscan.io/tx/${sig}`);
+    log(`SOL verified: $${usd} → ${points} pts`, 'ok');
+    return;
+  }
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const tx = parseTx(data);
+    if (!tx || tx.hash === C.lastTx) return;
+    if (getSender(tx) === sender) {
+      C.lastTx = tx.hash; S.set('lastTx', C.lastTx);
+      const amount = getAmount(tx);
+      const usd = (amount * price).toFixed(4);
+      const points = usd < 0.01 ? `low (${usd})` : Math.floor(usd / 0.01);
+      await sendGameDeposit(coin, points);
+      await sendRefundInfo(coin, `${amount} ${coin}`, usd, tx.hash, explorer(tx.hash));
+      log(`${coin} verified: $${usd} → ${points} pts`, 'ok');
     }
-  }catch(e){log(`SOL error: ${e.message}`,'err');}
+  } catch (e) { log(`${coin} error: ${e.message}`, 'err'); }
 }
 
-async function checkAll(){
-  await Promise.allSettled([checkBTC(),checkLTC(),checkETH(),checkSOL()]);
-}
-
-/* ---------- AUTO-START ---------- */
-if(C.webhook && C.discordId && C.btc && C.ltc && C.eth && C.sol){
-  ['btcAddr','ltcAddr','ethAddr','solAddr'].forEach(id=>document.getElementById(id).textContent=C[id.slice(0,3)]);
-  document.getElementById('addresses').style.display = 'block';
-  document.getElementById('saveBtn').disabled = true;
-  log('Loaded config – monitoring', 'ok');
+// ====== AUTO-START ======
+if (C.discordId && C.senderWallet && C.coins.length > 0) {
+  renderWallets();
+  document.getElementById('mainBtn').disabled = true;
+  log('Auto-started', 'ok');
   fetchPrices();
   setInterval(fetchPrices, 60000);
-  checkAll();
-  setInterval(checkAll,30000);
+  C.coins.forEach(coin => checkDeposit(coin));
+  setInterval(() => C.coins.forEach(coin => checkDeposit(coin)), 30000);
 }
 </script>
 </body>
